@@ -6,7 +6,7 @@ from typing import TypedDict, Dict, Optional, Union, List
 
 class BBItemDict(TypedDict):
     ref: str
-    value: Union[str, int, float, bool]
+    value: Optional[Union[str, int, float, bool]]
     belief: Optional[Union[int, float]]
     probability: Optional[Union[int, float]]
     accuracy: Optional[Union[int, float]]
