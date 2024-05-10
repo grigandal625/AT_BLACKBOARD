@@ -27,7 +27,7 @@ class ATBlackBoard(ATComponent):
     def set_item(
         self, 
         ref: str,
-        value: Union[str, int, float, bool],
+        value: Optional[Union[str, int, float, bool]] = None,
         belief: Optional[Union[int, float]] = None,
         probability: Optional[Union[int, float]] = None,
         accuracy: Optional[Union[int, float]] = None,
@@ -35,6 +35,11 @@ class ATBlackBoard(ATComponent):
     ) -> BBItemDict:
         dir_key = kwargs.pop('auth_token', 'default')
         dir = self._bb.get(dir_key, {})
+        
+        if value is None:
+            dir.pop(ref, None)
+            self._bb[dir_key] = dir
+            return self.empty_item
 
         item: BBItemDict = {}
         item['ref'] = ref
