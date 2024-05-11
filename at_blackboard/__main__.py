@@ -3,6 +3,7 @@ from at_queue.core.session import ConnectionParameters
 from at_blackboard.core.at_blackboard import ATBlackBoard
 import asyncio
 import logging
+import os
 
 parser = argparse.ArgumentParser(
     prog='at-blackboard',
@@ -21,6 +22,13 @@ async def main(**connection_kwargs):
     bb = ATBlackBoard(connection_parameters=connection_parameters)
     await bb.initialize()
     await bb.register()
+
+    if not os.path.exists('/var/run/at_blackboard/'):
+        os.makedirs('/var/run/at_blackboard/')
+
+    with open('/var/run/at_blackboard/pidfile.pid', 'w') as f:
+        f.write(str(os.getpid()))
+
     await bb.start()
 
 
