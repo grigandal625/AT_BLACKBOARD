@@ -46,11 +46,15 @@ async def main(**connection_kwargs):
     await bb.initialize()
     await bb.register()
 
-    if not os.path.exists("/var/run/at_blackboard/"):
-        os.makedirs("/var/run/at_blackboard/")
+    try:
 
-    with open("/var/run/at_blackboard/pidfile.pid", "w") as f:
-        f.write(str(os.getpid()))
+        if not os.path.exists("/var/run/at_blackboard/"):
+            os.makedirs("/var/run/at_blackboard/")
+
+        with open("/var/run/at_blackboard/pidfile.pid", "w") as f:
+            f.write(str(os.getpid()))
+    except PermissionError:
+        pass
 
     await bb.start()
 
