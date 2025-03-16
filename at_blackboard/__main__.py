@@ -47,7 +47,6 @@ async def main(**connection_kwargs):
     await bb.register()
 
     try:
-
         if not os.path.exists("/var/run/at_blackboard/"):
             os.makedirs("/var/run/at_blackboard/")
 
