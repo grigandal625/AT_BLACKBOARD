@@ -29,16 +29,19 @@ class ATBlackBoard(ATComponent):
         self._bb = {}
 
     @authorized_method
-    def set_item(
+    async def set_item(
         self,
         ref: str,
         value: Optional[Union[str, int, float, bool]] = None,
         belief: Optional[Union[int, float]] = None,
         probability: Optional[Union[int, float]] = None,
         accuracy: Optional[Union[int, float]] = None,
-        **kwargs
+        auth_token: str = None,
+        **kwargs,
     ) -> BBItemDict:
-        dir_key = kwargs.pop("auth_token", "default")
+        auth_token = auth_token or "default"
+        auth_token_or_user_id = await self.get_user_id_or_token(auth_token, raize_on_failed=False)
+        dir_key = auth_token_or_user_id
         dir = self._bb.get(dir_key, {})
 
         if value is None:
@@ -59,12 +62,43 @@ class ATBlackBoard(ATComponent):
         return item
 
     @authorized_method
-    def set_items(self, items: List[BBItemDict], auth_token: str = None) -> List[BBItemDict]:
-        return [self.set_item(**item, auth_token=auth_token) for item in items]
+    async def set_items(self, items: List[BBItemDict], auth_token: str = None) -> List[BBItemDict]:
+        auth_token = auth_token or "default"
+        auth_token_or_user_id = await self.get_user_id_or_token(auth_token, raize_on_failed=False)
+        dir_key = auth_token_or_user_id
+        dir = self._bb.get(dir_key, {})
+
+        result = []
+        for item in items:
+            ref = item["ref"]
+            value = item["value"]
+            belief = item.get("belief")
+            probability = item.get("probability")
+            accuracy = item.get("accuracy")
+
+            if value is None:
+                dir.pop(ref, None)
+                self._bb[dir_key] = dir
+                return self.empty_item
+
+            item: BBItemDict = {}
+            item["ref"] = ref
+            item["value"] = value
+            item["belief"] = belief
+            item["probability"] = probability
+            item["accuracy"] = accuracy
+
+            dir[ref] = item
+            self._bb[dir_key] = dir
+            result.append(item)
+        return result
 
     @authorized_method
-    def get_item(self, ref: str, auth_token: str = None) -> EBBItemDict:
-        dir_key = auth_token or "default"
+    async def get_item(self, ref: str, auth_token: str = None) -> EBBItemDict:
+        auth_token = auth_token or "default"
+        auth_token_or_user_id = await self.get_user_id_or_token(auth_token, raize_on_failed=False)
+        dir_key = auth_token_or_user_id
+
         dir = self._bb.get(dir_key, {})
         item = dir.get(ref)
         if item is None:
@@ -72,19 +106,37 @@ class ATBlackBoard(ATComponent):
         return item
 
     @authorized_method
-    def get_items(self, refs: List[str], auth_token: str = None) -> List[EBBItemDict]:
-        return [self.get_item(ref, auth_token=auth_token) for ref in refs]
+    async def get_items(self, refs: List[str], auth_token: str = None) -> List[EBBItemDict]:
+        auth_token = auth_token or "default"
+        auth_token_or_user_id = await self.get_user_id_or_token(auth_token, raize_on_failed=False)
+        dir_key = auth_token_or_user_id
+
+        result = []
+
+        for ref in refs:
+            dir = self._bb.get(dir_key, {})
+            item = dir.get(ref)
+            if item is None:
+                result.append(self.empty_item)
+            result.append(item)
+        return result
 
     @authorized_method
-    def get_all_items(self, auth_token: str = None) -> List[BBItemDict]:
-        dir_key = auth_token or "default"
+    async def get_all_items(self, auth_token: str = None) -> List[BBItemDict]:
+        auth_token = auth_token or "default"
+        auth_token_or_user_id = await self.get_user_id_or_token(auth_token, raize_on_failed=False)
+        dir_key = auth_token_or_user_id
         dir = self._bb.get(dir_key, {})
         return list(dir.values())
 
     @authorized_method
-    def clear(self, auth_token: str = None):
-        dir_key = auth_token or "default"
+    async def clear(self, auth_token: str = None):
+        auth_token = auth_token or "default"
+        auth_token_or_user_id = await self.get_user_id_or_token(auth_token, raize_on_failed=False)
+        dir_key = auth_token_or_user_id
+
         self._bb[dir_key] = {}
+
         return True
 
     @property
